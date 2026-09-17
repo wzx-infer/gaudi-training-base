@@ -1,0 +1,65 @@
+# 模型权重
+*.bin
+*.safetensors
+*.pth
+*.ckpt
+checkpoints/
+models/
+output/
+runs/
+
+# 数据集
+*.jpg
+*.png
+*.jpeg
+*.webp
+data/*.jsonl
+!data/train_cad.jsonl
+
+# 日志
+logs/
+*.log
+wandb/
+tensorboard/
+
+# Docker
+.dockerignore
+*.tar
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 环境变量
+.env
+.env.local
+env.sh.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db
