@@ -171,14 +171,16 @@ def freeze_model_components(model, stage: int):
     阶段1：冻结LLM+视觉编码器，仅训练投影层
     阶段2：冻结视觉编码器，LoRA微调LLM
     """
+    trainable_modules = []
+
     if stage == 1:
         logger.info("🔒 阶段1：冻结LLM主干和视觉编码器，训练投影层")
         for name, param in model.named_parameters():
             param.requires_grad = False
-            # 解冻投影层（通常命名为visual_projection, mm_projector等）
-            if any(key in name.lower() for key in ["projector", "projection", "adapter"]):
+            # 解冻投影层（通常命名为visual_projection, mm_projector, merger等）
+            if any(key in name.lower() for key in ["projector", "projection", "adapter", "merger"]):
                 param.requires_grad = True
-                logger.info(f"  ✓ 解冻投影层: {name}")
+                trainable_modules.append(name)
 
     elif stage == 2:
         logger.info("🔒 阶段2：冻结视觉编码器，LoRA微调LLM主干")
@@ -186,10 +188,27 @@ def freeze_model_components(model, stage: int):
             # 冻结视觉编码器
             if any(key in name.lower() for key in ["visual", "vision", "vit"]):
                 param.requires_grad = False
+            # 收集可训练模块（LoRA层）
+            elif param.requires_grad:
+                trainable_modules.append(name)
 
+    # 统计参数
     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     total_params = sum(p.numel() for p in model.parameters())
+
     logger.info(f"📊 可训练参数: {trainable_params:,} / {total_params:,} ({100 * trainable_params / total_params:.2f}%)")
+
+    # 打印可训练模块清单
+    if trainable_modules:
+        logger.info(f"✅ 可训练模块清单 ({len(trainable_modules)} 个):")
+        for module in trainable_modules[:20]:  # 最多显示前20个
+            logger.info(f"  - {module}")
+        if len(trainable_modules) > 20:
+            logger.info(f"  ... 还有 {len(trainable_modules)-20} 个模块")
+    else:
+        logger.warning("⚠️ 警告：没有找到可训练模块！请检查freeze策略")
+
+    return trainable_modules
 
 
 # ============================================================

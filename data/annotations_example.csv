@@ -1,0 +1,17 @@
+image_name,component_type,description
+hvac_tee_001.jpg,风管三通,三根管道交汇形成T型结构
+hvac_tee_002.jpg,风管三通,支管垂直连接主管
+hvac_elbow_001.jpg,风管弯头,管道90度转弯
+hvac_elbow_002.jpg,风管弯头,45度转角
+hvac_reducer_001.jpg,风管变径,大小头渐变段
+hvac_reducer_002.jpg,风管变径,连接不同管径
+hvac_damper_001.jpg,风量调节阀,可调节风量装置
+hvac_damper_002.jpg,风量调节阀,风管内部调节阀
+hvac_duct_001.jpg,风管,直管段
+hvac_duct_002.jpg,风管,水平风管
+hvac_flange_001.jpg,风管法兰,螺栓连接法兰
+hvac_flange_002.jpg,风管法兰,管道连接件
+hvac_firedam_001.jpg,防火阀,70度防火阀
+hvac_firedam_002.jpg,防火阀,280度防火阀
+hvac_silencer_001.jpg,消声器,片式消声器
+hvac_silencer_002.jpg,消声器,管式消声器

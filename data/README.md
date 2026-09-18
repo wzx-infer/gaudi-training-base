@@ -1,34 +1,57 @@
 # 数据说明
 
+**任务场景**：暖通/机电工程图构件识别，识别输出为构件类别（风管三通、弯头、变径、阀门等）
+
 ## 📁 目录结构
 
 ```
 data/
-├── examples/           # 样例数据
+├── examples/           # 样例数据（暖通构件识别）
 │   └── train_cad.jsonl
-├── train/             # 训练数据 (自己准备)
-├── val/               # 验证数据 (自己准备)
+├── train/             # 训练数据 (使用工具生成)
+├── val/               # 验证数据 (使用工具生成)
+├── images/            # 图像文件
+│   └── hvac/         # 暖通工程图纸
 └── README.md          # 本文件
 ```
 
 ## 📝 数据格式
 
-本项目支持 **ShareGPT 格式**的多模态数据：
+本项目支持 **ShareGPT 格式**的多模态数据，专注于**暖通构件识别任务**：
 
 ```json
 {
   "messages": [
     {
       "role": "user",
-      "content": "<image>\n请分析这张CAD图纸的尺寸标注"
+      "content": [
+        {"type": "image", "image": "hvac_tee_001.jpg"},
+        {"type": "text", "text": "请识别图纸中红圈标注的构件类型"}
+      ]
     },
     {
       "role": "assistant",
-      "content": "<think>\n我需要仔细观察图纸的各个部分...\n1. 首先识别主要的尺寸标注\n2. 然后分析标注的位置和含义\n</think>\n\n该CAD图纸包含以下尺寸标注：..."
+      "content": "<think>观察红圈位置，这是三根管道的交汇点，其中两根管道在同一直线上，第三根管道垂直连接。从管道直径和连接方式判断，这是典型的风管三通接头。</think>\n这是风管三通"
     }
   ],
-  "images": ["path/to/cad_image.jpg"]
+  "images": ["hvac_tee_001.jpg"]
 }
+```
+
+### 暖通构件类别
+
+本项目支持的暖通构件类别：
+
+| 构件类别 | 说明 | 示例图纸特征 |
+|---------|------|-------------|
+| 风管三通 | 三根管道交汇，支管垂直连接主管 | T型结构，90度分支 |
+| 风管弯头 | 管道方向改变 | 90度/45度转角 |
+| 风管变径 | 连接不同管径的过渡段 | 大小头，渐变段 |
+| 风量调节阀 | 调节风量的装置 | 管道中虚线标注 |
+| 风管 | 直管段 | 平行双线 |
+| 风管法兰 | 管道连接件 | 凸出结构+螺栓孔 |
+| 防火阀 | 防火安全装置 | 特殊图例符号 |
+| 消声器 | 降噪装置 | 内部填充结构 |
 ```
 
 ### 字段说明
@@ -53,94 +76,103 @@ data/
 
 ## 🔧 数据准备工具
 
-### 1. 格式转换
+### 1. 批量生成数据集（推荐）
+
+使用批量生成工具从CSV标注表生成训练数据：
+
+```bash
+# 准备CSV标注文件 annotations.csv，格式如下：
+# image_name,component_type,description
+# hvac_001.jpg,风管三通,三根管道交汇形成T型结构
+# hvac_002.jpg,风管弯头,管道90度转弯
+# ...
+
+# 批量生成数据集
+python tools/build_hvac_dataset.py \
+    --csv annotations.csv \
+    --image_dir data/images/hvac \
+    --output_dir data \
+    --train_ratio 0.9
+
+# 自动生成：
+# - data/train/hvac_train.jsonl (训练集)
+# - data/val/hvac_val.jsonl (验证集)
+# - 自动验证图片存在性
+# - 自动添加think推理内容
+# - 按类别分层划分train/val
+```
+
+**CSV文件示例**：
+```csv
+image_name,component_type,description
+hvac_tee_001.jpg,风管三通,三根管道交汇
+hvac_elbow_001.jpg,风管弯头,90度转角
+hvac_reducer_001.jpg,风管变径,大小头连接
+hvac_damper_001.jpg,风量调节阀,可调节风量
+```
+
+### 2. 格式转换
 
 如果你的数据是其他格式（如 Alpaca），可以使用转换工具：
 
 ```bash
 # Alpaca 格式转换为 ShareGPT
-python ../tools/data_converter.py convert \
+python tools/data_converter.py convert \
     --input your_alpaca_data.jsonl \
     --output train/converted_data.jsonl \
     --format alpaca
-
-# 自动检测格式
-python ../tools/data_converter.py convert \
-    --input your_data.jsonl \
-    --output train/converted_data.jsonl \
-    --format auto
 ```
 
-### 2. 格式验证
+### 3. 格式验证
 
 验证你的数据格式是否正确：
 
 ```bash
-python ../tools/data_converter.py validate \
-    --input train/your_data.jsonl
-```
-
-### 3. 添加 Think 标签
-
-为现有数据添加 think 标签：
-
-```bash
-python ../tools/data_converter.py add-think \
-    --input train/data.jsonl \
-    --output train/data_with_think.jsonl
+python tools/data_converter.py validate \
+    --input train/hvac_train.jsonl
 ```
 
 ## 📊 数据组织建议
+
+### 推荐数据规模
+
+| 数据集 | 最小规模 | 推荐规模 | 说明 |
+|--------|---------|---------|------|
+| **总样本数** | 1000条 | 3000+条 | 快速验证 → 良好性能 |
+| **每类样本数** | 100条 | 300+条 | 保证每类均衡 |
+| **验证集比例** | 10% | 10-15% | 按类别分层划分 |
+
+### 构件类别分布示例
+
+```
+总计: 3000 条
+├── 风管三通: 500 条 (16.7%)
+├── 风管弯头: 500 条 (16.7%)
+├── 风管变径: 400 条 (13.3%)
+├── 风量调节阀: 300 条 (10.0%)
+├── 风管: 600 条 (20.0%)
+├── 风管法兰: 300 条 (10.0%)
+├── 防火阀: 200 条 (6.7%)
+└── 消声器: 200 条 (6.7%)
+```
 
 ### 目录结构示例
 
 ```
 data/
 ├── examples/
-│   └── train_cad.jsonl          # 样例数据
+│   └── train_cad.jsonl          # 6个暖通构件样例
 ├── train/
-│   ├── cad_analysis.jsonl       # CAD图纸分析数据
-│   ├── ocr_recognition.jsonl    # OCR识别数据
-│   └── qa_pairs.jsonl           # 问答对数据
+│   └── hvac_train.jsonl         # 训练集（工具生成）
 ├── val/
-│   └── validation.jsonl         # 验证集
+│   └── hvac_val.jsonl           # 验证集（工具生成）
 └── images/
-    ├── cad/                     # CAD图纸
-    ├── diagrams/                # 示意图
-    └── photos/                  # 照片
+    └── hvac/                    # 暖通工程图纸
+        ├── hvac_tee_001.jpg
+        ├── hvac_elbow_001.jpg
+        ├── hvac_reducer_001.jpg
+        └── ...
 ```
-
-### 图片路径
-
-图片路径可以是：
-- **相对路径**: `images/cad/drawing001.jpg`
-- **绝对路径**: `/data/images/drawing001.jpg`
-- **URL**: `http://example.com/image.jpg` (如果模型支持)
-
-## 🎯 数据质量建议
-
-### 1. 数据量
-- **最小**: 1000条对话（快速验证）
-- **推荐**: 10000+条对话（良好性能）
-- **理想**: 100000+条对话（最佳性能）
-
-### 2. 数据多样性
-- ✅ 覆盖不同类型的CAD图纸
-- ✅ 包含不同难度的问题
-- ✅ 多样化的问答风格
-- ✅ 平衡的对话长度
-
-### 3. 数据清洗
-- ✅ 移除重复数据
-- ✅ 检查图片是否存在
-- ✅ 验证JSON格式正确
-- ✅ 统一图片尺寸和格式
-
-### 4. Think 质量
-- ✅ 思考过程要具体，不要泛泛而谈
-- ✅ 步骤要清晰，便于模型学习
-- ✅ 长度适中，通常3-5个推理步骤
-- ❌ 避免"让我想想"这种无信息量的内容
 
 ## 📝 数据标注示例
 
@@ -150,17 +182,26 @@ data/
 {
   "messages": [
     {
-      "role": "user", 
-      "content": "<image>\n这个零件的总长度是多少？"
+      "role": "user",
+      "content": [
+        {"type": "image", "image": "hvac_tee_001.jpg"},
+        {"type": "text", "text": "请识别图纸中红圈标注的构件类型"}
+      ]
     },
     {
       "role": "assistant",
-      "content": "<think>\n1. 观察图纸，找到表示总长度的尺寸标注\n2. 识别标注数值：左端到右端标注为120mm\n3. 验证：各段尺寸相加 = 30+60+30 = 120mm，一致\n</think>\n\n根据图纸标注，这个零件的总长度是 120mm。"
+      "content": "<think>观察红圈位置，这是三根管道的交汇点，其中两根管道在同一直线上，第三根管道垂直连接。从管道直径和连接方式判断，这是典型的风管三通接头。</think>\n这是风管三通"
     }
   ],
-  "images": ["data/images/cad/part_001.jpg"]
+  "images": ["hvac_tee_001.jpg"]
 }
 ```
+
+**要点**：
+- ✅ Think推理过程具体，描述了观察到的特征
+- ✅ 识别结果简洁明确："这是{构件类别}"
+- ✅ 图像路径清晰
+- ✅ 用户prompt自然
 
 ### 不好的标注 ❌
 
@@ -169,11 +210,11 @@ data/
   "messages": [
     {
       "role": "user",
-      "content": "总长度？"  // ❌ 太简短，缺少上下文
+      "content": "这是什么？"  // ❌ 太简短，缺少上下文
     },
     {
-      "role": "assistant", 
-      "content": "120mm"  // ❌ 没有推理过程，没有think标签
+      "role": "assistant",
+      "content": "三通"  // ❌ 没有think推理，没有"这是"格式
     }
   ],
   "images": []  // ❌ 缺少图片
