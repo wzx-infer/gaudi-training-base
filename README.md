@@ -49,29 +49,112 @@
 
 ## 🚀 快速开始
 
-### 方法1: LLaMA-Factory (推荐新手)
+### 步骤0: Docker环境准备 (⚠️ 必须先完成)
+
+**Docker是整个训练环境的基础设施**，必须首先构建Docker镜像并启动容器。
+
+#### 构建Docker镜像
 
 ```bash
-# 1. 环境准备
+# 基础镜像：vault.habana.ai/gaudi-docker/1.24.1/ubuntu24.04/habanalabs/pytorch-installer-2.11.0:latest
+# 包含：Synapse 1.24.1, PyTorch 2.11.0, Habana优化
+
+cd docker
+bash build.sh
+
+# 构建完成后会生成镜像: gaudi-training-base:latest
+```
+
+**镜像包含**：
+- ✅ Habana PyTorch 2.11.0 (Lazy模式支持)
+- ✅ Synapse AI Software Suite 1.24.1
+- ✅ optimum-habana 1.24.1
+- ✅ DeepSpeed for Gaudi
+- ✅ transformers, peft, accelerate (锁定版本)
+
+#### 启动训练容器
+
+```bash
+# 启动容器，挂载数据/模型/输出目录
+docker run -it --runtime=habana \
+    -e HABANA_VISIBLE_DEVICES=all \
+    -e OMPI_MCA_btl_vader_single_copy_mechanism=none \
+    --cap-add=sys_nice \
+    --net=host \
+    --ipc=host \
+    -v $(pwd):/workspace/gaudi-training-base \
+    -v /path/to/models:/models \
+    -v /path/to/data:/data \
+    -v /path/to/outputs:/outputs \
+    gaudi-training-base:latest
+
+# 进入容器后，工作目录：/workspace/gaudi-training-base
+```
+
+**关键挂载点**：
+- `-v $(pwd):/workspace/gaudi-training-base` - 项目代码
+- `-v /path/to/models:/models` - 预训练模型
+- `-v /path/to/data:/data` - 训练数据
+- `-v /path/to/outputs:/outputs` - 输出结果
+
+#### 验证环境
+
+```bash
+# 容器内执行
 source configs/env.sh
 bash scripts/verify_env.sh
 
-# 2. 准备数据 (使用样例数据测试)
-# 数据已在 data/examples/train_cad.jsonl
+# 应该看到：
+# ✅ Habana devices detected: 8
+# ✅ PyTorch Lazy mode: Enabled
+# ✅ HCCL configured
+# ✅ DeepSpeed installed
+```
 
-# 3. 一键训练
+---
+
+### 步骤1: 准备数据
+
+**暖通构件识别场景**：参考 [快速入门指南](docs/QUICKSTART_HVAC.md)
+
+```bash
+# 1. 准备CSV标注文件（参考 data/annotations_example.csv）
+# 2. 将图纸放到 data/images/hvac/
+# 3. 批量生成训练数据集
+python tools/build_hvac_dataset.py \
+    --csv annotations.csv \
+    --image_dir data/images/hvac \
+    --output_dir data \
+    --train_ratio 0.9
+```
+
+或者使用样例数据快速测试：
+```bash
+# 样例数据已在 data/examples/train_cad.jsonl
+```
+
+---
+
+### 步骤2: 开始训练
+
+#### 方法A: LLaMA-Factory (推荐新手)
+
+```bash
+# 1. 加载环境变量
+source configs/env.sh
+
+# 2. 一键训练
 cd training/llamafactory
 bash train.sh
 ```
 
 **就这么简单！** ✨ 训练会自动开始，模型保存在 `outputs/models/`
 
-### 方法2: 原生训练 (专业用户)
+#### 方法B: 原生训练 (专业用户)
 
 ```bash
-# 1. 环境准备
+# 1. 加载环境变量
 source configs/env.sh
-bash scripts/verify_env.sh
 
 # 2. 两阶段训练
 cd training/native
