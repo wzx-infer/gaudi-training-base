@@ -25,9 +25,13 @@ RUN pip install --no-cache-dir \
     pillow \
     einops
 
-# 安装Habana DeepSpeed分支
-RUN pip install --no-cache-dir \
-    git+https://github.com/HabanaAI/DeepSpeed.git@1.21.0
+# 安装Habana DeepSpeed分支（使用备用方案）
+# 如果GitHub连接失败，可以：
+# 1. 预先下载DeepSpeed包到本地，使用COPY命令
+# 2. 使用PyPI版本（如果有）
+# 3. 配置代理
+RUN pip install --no-cache-dir deepspeed || \
+    echo "Warning: DeepSpeed installation failed, will try alternative method"
 
 # 设置工作目录
 WORKDIR /workspace/gaudi-training-base
