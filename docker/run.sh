@@ -1,18 +1,17 @@
 #!/bin/bash
 # Docker容器快速启动脚本
-# 用法: bash scripts/run_container.sh
 
 set -e
 
-# 配置参数（根据实际环境修改）
-IMAGE_NAME="gaudi-multimodal-train:1.24.1"
+# 配置参数
+IMAGE_NAME="gaudi-training-base:latest"
 CONTAINER_NAME="gaudi-train-$(date +%Y%m%d-%H%M%S)"
 
 # 目录挂载（请根据实际路径修改）
-WORKSPACE_DIR=$(pwd)
-MODEL_DIR="${HOME}/models"              # 预下载的模型权重
-DATA_DIR="${HOME}/data"                 # 训练数据集
-OUTPUT_DIR="${HOME}/output"             # 训练输出
+WORKSPACE_DIR=$(cd .. && pwd)  # 上级目录，即项目根目录
+MODEL_DIR="${HOME}/models"
+DATA_DIR="${HOME}/data"
+OUTPUT_DIR="${HOME}/output"
 
 # 创建必要目录
 mkdir -p $OUTPUT_DIR
@@ -28,9 +27,19 @@ echo "数据目录: $DATA_DIR"
 echo "输出目录: $OUTPUT_DIR"
 echo "================================================"
 
+# 检测是否有habana runtime
+if docker info 2>/dev/null | grep -q "habana"; then
+    # 有habana runtime
+    RUNTIME_ARGS="--runtime=habana"
+else
+    # 没有habana runtime，使用device方式
+    echo "⚠️  未检测到habana runtime，使用--device方式"
+    RUNTIME_ARGS="--device=/dev/accel:/dev/accel --device=/dev/accel_controlD0:/dev/accel_controlD0"
+fi
+
 docker run -it --rm \
   --name $CONTAINER_NAME \
-  --runtime=habana \
+  $RUNTIME_ARGS \
   -e HABANA_VISIBLE_DEVICES=all \
   -e OMPI_MCA_btl_vader_single_copy_mechanism=none \
   --cap-add=sys_nice \
