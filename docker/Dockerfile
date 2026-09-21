@@ -20,7 +20,7 @@ RUN pip install --no-cache-dir \
     optimum-habana==1.21.1 \
     transformers==4.55.0 \
     peft==0.11.1 \
-    accelerate==0.31.0 \
+    accelerate==1.10.1 \
     tensorboard \
     pillow \
     einops
