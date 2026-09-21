@@ -1,0 +1,67 @@
+# Gaudi2 多模态训练底座 - 版本锁定
+# 基于 Habana 官方镜像，适配 LLaMA-Factory 0.7.1
+FROM vault.habana.ai/gaudi-docker/1.24.1/ubuntu24.04/habanalabs/pytorch-installer-2.11.0:latest
+
+LABEL maintainer="Gaudi Training Base"
+LABEL description="Gaudi2 8-Card Multimodal LLM Training (Fixed Dependencies for LLaMA-Factory)"
+
+WORKDIR /workspace
+
+# 安装系统依赖
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    wget \
+    curl \
+    vim \
+    tmux \
+    htop \
+    && rm -rf /var/lib/apt/lists/*
+
+# 核心依赖版本锁定（解决 LLaMA-Factory 0.7.1 兼容性）
+# transformers 4.48.3: 支持 AutoModelForVision2Seq，Qwen2-VL 必需
+# accelerate 0.31.0: 符合 LLaMA-Factory >=0.34.0,<=1.7.0 要求（注：实际要求可能是 >=0.27.2）
+# peft 0.11.1: LoRA 训练
+# optimum-habana 1.24.1: Gaudi HPU 适配
+RUN pip install --no-cache-dir \
+    transformers==4.48.3 \
+    tokenizers==0.19.1 \
+    accelerate==0.31.0 \
+    peft==0.11.1 \
+    optimum-habana==1.24.1
+
+# 数据处理和训练工具
+RUN pip install --no-cache-dir \
+    datasets==2.20.0 \
+    tensorboard \
+    pillow \
+    einops \
+    sentencepiece \
+    protobuf
+
+# 安装 Habana DeepSpeed fork (1.24.1 分支)
+RUN pip install --no-cache-dir \
+    git+https://github.com/HabanaAI/DeepSpeed.git@1.24.1
+
+# 安装 LLaMA-Factory（不带依赖，避免版本冲突）
+RUN pip install --no-cache-dir --no-deps llmtuner==0.7.1
+
+# LLaMA-Factory 剩余依赖（已安装的跳过）
+RUN pip install --no-cache-dir \
+    trl>=0.8.1 \
+    gradio>=4.0.0 \
+    scipy \
+    matplotlib>=3.7.0 \
+    fire \
+    pyyaml \
+    nltk \
+    jieba \
+    rouge-chinese \
+    uvicorn \
+    pydantic \
+    fastapi \
+    sse-starlette
+
+# 设置工作目录
+WORKDIR /workspace/gaudi-training-base
+
+CMD ["/bin/bash"]
