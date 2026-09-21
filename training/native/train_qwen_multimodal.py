@@ -21,7 +21,7 @@ from torch.utils.data import Dataset
 from PIL import Image
 from transformers import (
     AutoProcessor,
-    AutoModelForVision2Seq,
+    Qwen2VLForConditionalGeneration,
     TrainingArguments,
     Trainer,
     HfArgumentParser,
@@ -230,7 +230,7 @@ def main():
         cache_dir=model_args.cache_dir,
     )
 
-    model = AutoModelForVision2Seq.from_pretrained(
+    model = Qwen2VLForConditionalGeneration.from_pretrained(
         model_args.model_name_or_path,
         trust_remote_code=model_args.trust_remote_code,
         cache_dir=model_args.cache_dir,
