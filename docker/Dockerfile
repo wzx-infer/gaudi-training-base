@@ -17,8 +17,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # 锁定依赖版本
 RUN pip install --no-cache-dir \
-    optimum-habana==1.24.1 \
-    transformers==4.48.2 \
+    optimum-habana==1.21.1 \
+    transformers==4.46.0 \
     peft==0.11.1 \
     accelerate==0.31.0 \
     tensorboard \
@@ -27,7 +27,7 @@ RUN pip install --no-cache-dir \
 
 # 安装Habana DeepSpeed分支
 RUN pip install --no-cache-dir \
-    git+https://github.com/HabanaAI/DeepSpeed.git@1.24.1
+    git+https://github.com/HabanaAI/DeepSpeed.git@1.21.0
 
 # 设置工作目录
 WORKDIR /workspace/gaudi-training-base
