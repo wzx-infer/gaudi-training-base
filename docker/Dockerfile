@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # 锁定依赖版本
 RUN pip install --no-cache-dir \
     optimum-habana==1.21.1 \
-    transformers==4.46.0 \
+    transformers==4.55.0 \
     peft==0.11.1 \
     accelerate==0.31.0 \
     tensorboard \
