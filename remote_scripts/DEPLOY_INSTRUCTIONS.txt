@@ -1,0 +1,33 @@
+﻿@echo off
+echo ================================================
+echo Remote Gaudi2 Training Deployment Package
+echo ================================================
+echo.
+echo This package contains:
+echo   1. quick_diag.sh      - Quick diagnostic script
+echo   2. minimal_test.sh    - Minimal training test
+echo   3. remote_full_test.sh - Full diagnostic
+echo   4. remote_fix_and_test.sh - Complete fix and test
+echo   5. README.md          - Detailed instructions
+echo.
+echo ================================================
+echo Deployment Steps:
+echo ================================================
+echo.
+echo Step 1: Upload scripts to remote server
+echo   scp -r remote_scripts wzx@10.89.83.84:~/
+echo   Password: qwerty
+echo.
+echo Step 2: SSH to remote server
+echo   ssh wzx@10.89.83.84
+echo.
+echo Step 3: Run quick diagnostic
+echo   cd ~/remote_scripts
+echo   bash quick_diag.sh
+echo.
+echo Step 4: Run minimal test (recommended)
+echo   bash minimal_test.sh
+echo.
+echo ================================================
+echo For detailed instructions, see remote_scripts/README.md
+echo ================================================
