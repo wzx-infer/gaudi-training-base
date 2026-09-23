@@ -1,0 +1,43 @@
+### Model
+model_name_or_path: /models/Qwen/Qwen3.8-27B
+
+### Method
+stage: sft
+do_train: true
+finetuning_type: lora
+lora_target: all
+lora_rank: 64
+lora_alpha: 128
+lora_dropout: 0.1
+
+### Dataset
+dataset: mechvqa_train
+template: qwen3_vl
+cutoff_len: 8192
+overwrite_cache: true
+preprocessing_num_workers: 4
+
+### Output
+output_dir: /workspace/gaudi-training-base/results/sft/checkpoints
+logging_steps: 10
+save_steps: 500
+plot_loss: true
+overwrite_output_dir: true
+
+### Train - 8卡配置
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 8
+learning_rate: 5.0e-5
+num_train_epochs: 3.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+ddp_timeout: 180000000
+
+### 多卡分布式训练 (使用PyTorch DDP，暂不用DeepSpeed)
+# deepspeed: /workspace/gaudi-training-base/configs/deepspeed_z2.json
+ddp_find_unused_parameters: false
+
+### Eval
+val_size: 0.0
+per_device_eval_batch_size: 1

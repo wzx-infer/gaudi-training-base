@@ -1,0 +1,50 @@
+### Model
+model_name_or_path: /models/Qwen/Qwen3.8-27B
+
+### Method
+stage: sft
+do_train: true
+finetuning_type: lora
+lora_target: all
+lora_rank: 64
+lora_alpha: 128
+lora_dropout: 0.1
+
+### Dataset
+dataset: mechvqa_train
+template: qwen3_vl
+cutoff_len: 8192
+overwrite_cache: true
+preprocessing_num_workers: 4
+max_samples: 100  # 测试：只用100样本
+
+### Output
+output_dir: /workspace/gaudi-training-base/results/test/checkpoints
+logging_steps: 5
+save_steps: 50
+plot_loss: true
+overwrite_output_dir: true
+
+### Train
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 2  # 测试：减少梯度累积
+learning_rate: 5.0e-5
+num_train_epochs: 1.0  # 测试：只训练1个epoch
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+ddp_timeout: 180000000
+
+### Eval
+val_size: 0.0
+per_device_eval_batch_size: 1
+evaluation_strategy: "no"
+
+### HPU specific
+use_habana: true
+use_lazy_mode: false
+gaudi_config_name: Habana/llama
+
+### Logging
+report_to: tensorboard
+logging_dir: /workspace/gaudi-training-base/results/test/logs
