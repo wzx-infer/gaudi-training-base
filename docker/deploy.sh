@@ -14,15 +14,17 @@ docker stop gaudi-train-v2 2>/dev/null || true
 docker rm gaudi-train-v2 2>/dev/null || true
 docker stop gaudi-mutimodel-training 2>/dev/null || true
 docker rm gaudi-mutimodel-training 2>/dev/null || true
+docker stop docker-mutimodel-training 2>/dev/null || true
+docker rm docker-mutimodel-training 2>/dev/null || true
 
 # 2. 构建镜像
 echo ">>> 构建 Docker 镜像..."
 docker build -t gaudi-train-qwen35:v2 .
 
 # 3. 启动容器
-echo ">>> 启动容器 gaudi-mutimodel-training..."
+echo ">>> 启动容器 docker-mutimodel-training..."
 docker run -it -d \
-  --name gaudi-mutimodel-training \
+  --name docker-mutimodel-training \
   --privileged \
   -v /dev/accel:/dev/habanalabs \
   -e HABANA_VISIBLE_DEVICES=all \
@@ -38,7 +40,7 @@ docker run -it -d \
 
 # 4. 验证容器状态
 echo ">>> 验证容器状态..."
-docker ps --filter name=gaudi-mutimodel-training
+docker ps --filter name=docker-mutimodel-training
 
 echo ""
 echo "=========================================="
@@ -46,6 +48,6 @@ echo "✓ 部署完成"
 echo "=========================================="
 echo ""
 echo "下一步操作："
-echo "  1. 进入容器: docker exec -it gaudi-mutimodel-training bash"
-echo "  2. 运行验证脚本: bash /workspace/verify_env.sh"
+echo "  1. 进入容器: docker exec -it docker-mutimodel-training bash"
+echo "  2. 运行验证脚本: cd /workspace/gaudi-training-base/docker && bash verify_env.sh"
 echo ""

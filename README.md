@@ -1,6 +1,6 @@
 # Gaudi2 多模态训练环境
 
-Intel Gaudi2 8卡 + Qwen3.5 多模态模型训练底座，基于 LLaMA-Factory 和原生训练双方案。
+Intel Gaudi2 8卡 + Qwen3.8-27B 多模态模型训练底座，基于 LLaMA-Factory 和原生训练双方案。
 
 ---
 
@@ -67,30 +67,31 @@ bash deploy.sh
 
 这会自动：
 - 构建镜像 `gaudi-train-qwen35:v2`
-- 启动容器 `gaudi-mutimodel-training`
+- 启动容器 `docker-mutimodel-training`
 - 挂载模型和数据目录
 
 #### 2. 进入容器并验证环境
 
 ```bash
-docker exec -it gaudi-mutimodel-training bash
+docker exec -it docker-mutimodel-training bash
+cd /workspace/gaudi-training-base/docker
 bash verify_env.sh
 ```
 
 验证脚本会检查：
 - ✅ HPU 设备（8 个 Gaudi2）
-- ✅ 模型路径
+- ✅ Qwen3.8-27B 模型路径
 - ✅ LLaMA-Factory 安装
-- ✅ 运行一次完整训练测试
+- ✅ 运行一次完整训练测试（基于 Qwen3.8-27B）
 
 #### 3. 查看训练结果
 
 ```bash
 # 查看训练输出
-ls -lh /workspace/LLaMA-Factory/saves/qwen3.5-0.8b-v2/
+ls -lh /workspace/LLaMA-Factory/saves/qwen3.8-27b-lora/
 
 # 查看训练日志
-cat /workspace/LLaMA-Factory/saves/qwen3.5-0.8b-v2/trainer_log.jsonl
+cat /workspace/LLaMA-Factory/saves/qwen3.8-27b-lora/trainer_log.jsonl
 ```
 
 **详细文档**: [training/llamafactory/README.md](training/llamafactory/README.md)
